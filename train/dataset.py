@@ -2,6 +2,7 @@ import pandas as pd
 import torch
 import spacy
 import random
+import datasets
 from transformers import AutoTokenizer
 from typing import List, Mapping, Tuple
 from torch.utils.data import Dataset
@@ -9,11 +10,11 @@ from torch.utils.data import Dataset
 
 class QAGDataset(Dataset):
     def __init__(this,
-                 data: pd.DataFrame,
+                 data: datasets.Dataset,
                  max_length: int,
                  pad_mask_id: int,
                  tokenizer: AutoTokenizer) -> None:
-        this.data = data
+        this.data = pd.DataFrame(data)
         this.max_length = max_length
         this.pad_mask_id = pad_mask_id
         this.tokenizer = tokenizer
@@ -88,13 +89,24 @@ class QAGEvaluatorDataset(Dataset):
             "input_ids": encoded_input["input_ids"].flatten(),
             "attention_mask": encoded_input["attention_mask"].flatten(),
             "token_type_ids": encoded_input["token_type_ids"].flatten(),
-            "labels": encoded_input["labels"].flatten(),
+            "labels": torch.Tensor(label_choice, dtype=torch.int64),
         }
 
-    def shuffle(this,  text: str) -> Tuple[str, str]:
-
+    def shuffle(this,  question: str, answer) -> Tuple[str, str]:
+        shuffled_answer = answer
+        while shuffled_answer == answer:
+            shuffled_answer = this.data.sample(1)['answer'].item()
+        return question, shuffled_answer
 
     def corrupt(this, question: str, answer: str) -> Tuple[str, str]:
-        ...
-
+        doc = this.spacy_tokenizer(question)     
+        if len(doc.ents) > 1:
+            copy_ent = str(random.choice(doc.ents))
+            for ent in doc.ents:
+                question = question.replace(str(ent), copy_ent)
+        elif len(doc.ents) == 1:
+            answer = str(doc.ents[0])
+        else:
+            question, answer = this.shuffle(question, answer)
+        return question, answer
 
