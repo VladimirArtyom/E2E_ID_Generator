@@ -33,7 +33,7 @@ def prep_model(model_name: str,
 def prep_tokenizer(model_name: str) -> T5Tokenizer:
     tokenizer = T5Tokenizer.from_pretrained(model_name)
     tokenizer.add_special_tokens({
-        "additional_special_tokens": ["<jawaban>", "<context>"]
+        "additional_special_tokens": ["<answer>", "<context>"]
     })
     return tokenizer
 

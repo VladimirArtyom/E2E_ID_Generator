@@ -39,7 +39,9 @@ class QAGDataset(Dataset):
     def __getitem__(this, index: int) -> Mapping[str, torch.Tensor]:
         item: pd.DataFrame = this.data.iloc[index]
 
-        context_ids, attention_mask = this._encode_text(item.context)
+        context = item.context
+        answer = item.answer
+        context_ids, attention_mask = this._encode_text("<answer> {} <context> {}".format(answer, context))
         labels, _ = this._encode_text(item.question)
         masked_labels = this._mask_padding_label(labels)
 
