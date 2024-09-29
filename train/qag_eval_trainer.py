@@ -7,21 +7,21 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, Adam
 from dataset import QAGEvaluatorDataset
 from trainer import Trainer
 
-#spacy.prefer_gpu()
+spacy.prefer_gpu()
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default="cuda", type=str)
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--pad_mask_id", type=int, default=100)
-    parser.add_argument("--model_name", type=str, default="bert-base-cased")
+    parser.add_argument("--model_name", type=str, default="indolem/indobert-base-uncased")# bert-base-cased
     parser.add_argument("--save_dir", type=str, default="./saved_model_QAG_evaluator/")
     parser.add_argument("--pin_memory", dest="pin_memory",
-                         action="store_true", default=False)
+                        action="store_true", default=False)
     parser.add_argument("--metrics_evaluation", dest="metrics_evaluation",
-                         action="store_true", default=False)
+                        action="store_true", default=False)
     parser.add_argument("--workers", type=int, default=0)
     parser.add_argument("--train_batch_size", type=int, default=1)
     parser.add_argument("--valid_batch_size", type=int, default=1)
@@ -38,7 +38,6 @@ if __name__ == "__main__":
     val_dataset = QAGEvaluatorDataset(dataset["validation"], args.max_length, tokenizer)
     test_dataset = QAGEvaluatorDataset(dataset["test"], args.max_length, tokenizer)
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name)
-    user_dir = "./dir/"
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
     trainer = Trainer(
         workers=args.workers,
@@ -49,7 +48,7 @@ if __name__ == "__main__":
         optimizer=optimizer,
         tokenizer=tokenizer,
         pin_memory=args.pin_memory,
-        save_dir=user_dir,
+        save_dir=args.save_dir,
         train_set=train_dataset,
         validation_set=val_dataset,
         test_set=test_dataset,
@@ -57,7 +56,6 @@ if __name__ == "__main__":
         validation_batch_size=args.valid_batch_size,
         test_batch_size=args.test_batch_size,
         metrics_evaluation=True
-    )    
+    )
 
     trainer.train()
-

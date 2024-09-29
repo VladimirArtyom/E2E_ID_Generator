@@ -46,7 +46,7 @@ class QAGDataset(Dataset):
         return {
             "input_ids": context_ids,
             "attention_mask": attention_mask,
-            "labels": masked_labels,
+            "labels": masked_labels.flatten(),
         }
 
 class QAGEvaluatorDataset(Dataset):
@@ -55,7 +55,7 @@ class QAGEvaluatorDataset(Dataset):
                  max_length: int,
                  tokenizer: AutoTokenizer,
                  ) -> None:
-        this.data = pd.DataFrame(data)
+        this.data = pd.DataFrame(data)[:10]
         this.max_length = max_length
         this.tokenizer = tokenizer
         this.spacy_tokenizer = spacy.load("xx_ent_wiki_sm")
@@ -99,7 +99,7 @@ class QAGEvaluatorDataset(Dataset):
         return question, shuffled_answer
 
     def corrupt(this, question: str, answer: str) -> Tuple[str, str]:
-        doc = this.spacy_tokenizer(question)     
+        doc = this.spacy_tokenizer(question)
         if len(doc.ents) > 1:
             copy_ent = str(random.choice(doc.ents))
             for ent in doc.ents:
@@ -109,4 +109,3 @@ class QAGEvaluatorDataset(Dataset):
         else:
             question, answer = this.shuffle(question, answer)
         return question, answer
-

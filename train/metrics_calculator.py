@@ -21,7 +21,7 @@ class MetricsCalc:
         this.count: int = 0
         this.avg: float = 0
         this.value: float = 0
-        
+
     def calculate_average(this) -> float:
         return this.sum / this.count
 
@@ -34,14 +34,15 @@ class MetricsCalc:
 class MetricsResult:
     def __init__(this) -> None:
         this.result: Mapping[str, MetricsCalc] = {}
-    
+
     def get_update_avg(this, key: str) -> float:
-        return this.result[key].avg()
+        return this.result[key].avg
 
     def update(this, scores: Mapping[str, float], n: int):
-        for score in scores:
-            mCalc = MetricsCalc(name=score)
-            mCalc.update(score.value, n)
-            
+        for score_name, value in scores.items():
+            mCalc = MetricsCalc(name=score_name)
+            mCalc.update(value, n)
+            this.result[score_name] = mCalc
+
 
 

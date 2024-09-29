@@ -5,13 +5,12 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer
 from sklearn.metrics import (accuracy_score, f1_score, matthews_corrcoef,
-                             balanced_accuracy_score, precision_score, recall_score)
+    balanced_accuracy_score, precision_score, recall_score)
 from typing import Mapping, List
 
 class Trainer:
     def __init__(
-        this,
-        device: str,
+        this, device: str,
         epochs: int,
         learning_rate: float,
         tokenizer: AutoTokenizer,
@@ -29,9 +28,7 @@ class Trainer:
         workers: int, 
         pin_memory: bool,
         metrics_evaluation: bool,
-
-
-    ) -> None:
+        ) -> None:
         this.device = device
         this.epochs = epochs
         this.learning_rate = learning_rate
@@ -39,7 +36,7 @@ class Trainer:
         this.model = model.to(this.device)
         this.optimizer = optimizer
         this.save_dir = save_dir
-        
+
         this.train_batch_size = train_batch_size
         this.validation_batch_size = validation_batch_size
         this.test_batch_size = test_batch_size
@@ -55,9 +52,9 @@ class Trainer:
                                                  batch_size=this.train_batch_size,
                                                  num_workers=workers,
                                                  pin_memory=pin_memory,
-                                                 shuffle=False )
+                                                 shuffle=False)
 
-        this.test_data_loader = DataLoader(test_set, 
+        this.test_data_loader = DataLoader(test_set,
                                            batch_size=this.test_batch_size,
                                            num_workers=workers,
                                            pin_memory=pin_memory,
@@ -79,7 +76,7 @@ class Trainer:
             with tqdm(total=len(this.train_data_loader), unit="batches") as tq:
                 tq.set_description(f"epoch {epoch}")
 
-                for batch in this.train_data_loader: 
+                for batch in this.train_data_loader:
                     this.optimizer.zero_grad()
                     data = {key: value.to(this.device) for key, value in batch.items()}
                     output = this.model(**data)
@@ -91,15 +88,20 @@ class Trainer:
                     tq.update(1)
 
             if this.metrics_evaluation:
+                print("Train Loss : ", loss.item())
                 valid_metrics = this._single_value_metrics(this.validate_metrics(this.validation_data_loader, this.train_batch_size))
                 if valid_metrics[MetricEnum.BAS.name] > this.best_valid_score:
                     print(f"The best validation improved from {this.best_valid_score} to {valid_metrics[MetricEnum.BAS.name]}")
                     this.best_valid_score = valid_metrics[MetricEnum.BAS.name]
+                this._show_metrics_results(valid_metrics)
+                this._save()
             else:
                 valid_loss = this.validate(this.validation_data_loader)
                 if this.best_loss_score > valid_loss:
                     print(f"The best loss decreased from {this.best_loss_score} to {valid_loss}")
                     this.best_loss_score = valid_loss
+                print("Train Loss : ", valid_loss)
+                this._save()
 
     def validate(this, dataloader: DataLoader):
         this.model.eval()
@@ -113,13 +115,25 @@ class Trainer:
                 tq.set_postfix({"valid_loss": this.validation_loss.avg})
                 tq.update(1)
 
-    def _save(this)-> None:
+    def _save(this) -> None:
         this.tokenizer.save_pretrained(this.save_dir)
         this.model.save_pretrained(this.save_dir)
-    
+
+
+    def _show_metrics_results(this, out: Mapping[str, float]) -> None:
+        print("Validation Loss : ",out[MetricEnum.LOSS.name])
+        print("Validation Accuracy : ",out[MetricEnum.ACCURACY.name])
+        print("Validation F1 : ", out[MetricEnum.F1.name])
+        print("Validation BAS : ", out[MetricEnum.BAS.name])
+        print("Vaidation Matthew: ", out[MetricEnum.MATTHEW.name])
+        print("Validation Recall: ", out[MetricEnum.RECALL.name]) 
+        print("Validation Precision: ",out[MetricEnum.PRECISION.name])
+
+
     def _single_value_metrics(this,
                               listOfMetrics: List[MetricsResult])-> Mapping[str, float]:
         out: Mapping[str, float] = {
+            MetricEnum.LOSS.name: 0,
             MetricEnum.ACCURACY.name: 0,
             MetricEnum.F1.name: 0,
             MetricEnum.BAS.name: 0,
@@ -137,7 +151,10 @@ class Trainer:
             matthew = la.get_update_avg(MetricEnum.MATTHEW.name)
             recall = la.get_update_avg(MetricEnum.RECALL.name)
             prec = la.get_update_avg(MetricEnum.PRECISION.name)
+            loss = la.get_update_avg(MetricEnum.LOSS.name)
 
+
+            out[MetricEnum.LOSS.name] += loss
             out[MetricEnum.ACCURACY.name] += acc
             out[MetricEnum.F1.name] += f1
             out[MetricEnum.BAS.name] += bas
@@ -145,6 +162,7 @@ class Trainer:
             out[MetricEnum.RECALL.name] += recall
             out[MetricEnum.PRECISION.name] += prec
 
+        out[MetricEnum.LOSS.name] = out[MetricEnum.LOSS.name] / n
         out[MetricEnum.ACCURACY.name] = out[MetricEnum.ACCURACY.name] / n
         out[MetricEnum.F1.name] = out[MetricEnum.F1.name] / n
         out[MetricEnum.BAS.name] = out[MetricEnum.BAS.name] / n
@@ -154,12 +172,10 @@ class Trainer:
 
         return out
 
-            
-    
     def _calculate_metrics( this,
-                            true: torch.Tensor,
-                            pred: torch.Tensor,
-                            ) -> Mapping[str, float]:
+                           true: torch.Tensor,
+                           pred: torch.Tensor,
+                           ) -> Mapping[str, float]:
         acc_score = accuracy_score(true, pred)
         f1 = f1_score(true, pred)
         bas = balanced_accuracy_score(true, pred)
@@ -189,23 +205,25 @@ class Trainer:
                 output = this.model(**data)
                 preds = torch.argmax(output.logits, dim=1)
                 scores = this._calculate_metrics(
-                                        data["labels"].cpu(),
-                                        preds.cpu()
-                                        )
-                scores["loss"] = output.loss.item()
+                    data["labels"].cpu(),
+                    preds.cpu()
+                )
+                scores[MetricEnum.LOSS.name] = output.loss.item()
                 mcResult = MetricsResult()
                 mcResult.update(scores, batch_size)
                 validation_metrics.append(mcResult)
+                """
                 tq.set_postfix({
-                      "loss": mcResult.get_update_avg(scores.loss),
-                      "accuracy": mcResult.get_update_avg(scores.accuracy),
-                      "f1": mcResult.get_update_avg(scores.f1),
-                      "bas": mcResult.get_update_avg(scores.bas),
-                      "matthew": mcResult.get_update_avg(scores.matthew),
-                      "recall": mcResult.get_update_avg(scores.recall),
-                      "precision": mcResult.get_update_avg(scores.precision)
+                      "loss": mcResult.get_update_avg(MetricEnum.LOSS.name),
+                      "accuracy": mcResult.get_update_avg(MetricEnum.ACCURACY.name),
+                      "f1": mcResult.get_update_avg(MetricEnum.F1.name),
+                      "bas": mcResult.get_update_avg(MetricEnum.BAS.name),
+                      "matthew": mcResult.get_update_avg(MetricEnum.MATTHEW.name),
+                      "recall": mcResult.get_update_avg(MetricEnum.RECALL.name),
+                      "precision": mcResult.get_update_avg(MetricEnum.PRECISION.name)
                       })
+                """
                 tq.update(1)
         return validation_metrics
-    
-                
+
+
