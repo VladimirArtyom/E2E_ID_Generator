@@ -23,9 +23,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--metrics_evaluation", dest="metrics_evaluation",
                          action="store_true", default=False)
     parser.add_argument("--workers", type=int, default=0)
-    parser.add_argument("--train_batch_size", type=int, default=8)
-    parser.add_argument("--valid_batch_size", type=int, default=8)
-    parser.add_argument("--test_batch_size", type=int, default=8)
+    parser.add_argument("--train_batch_size", type=int, default=1)
+    parser.add_argument("--valid_batch_size", type=int, default=1)
+    parser.add_argument("--test_batch_size", type=int, default=1)
 
     return parser.parse_args()
 
@@ -34,9 +34,9 @@ if __name__ == "__main__":
     args: argparse.Namespace = parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     dataset = datasets.load_dataset("Voslannack/squad_id_train")
-    train_dataset = QAGEvaluatorDataset(pd.DataFrame(dataset["train"]), args.max_length, tokenizer)
-    val_dataset = QAGEvaluatorDataset(pd.DataFrame(dataset["validation"]), args.max_length, tokenizer)
-    test_dataset = QAGEvaluatorDataset(pd.DataFrame(dataset["test"]), args.max_length, tokenizer)
+    train_dataset = QAGEvaluatorDataset(dataset["train"], args.max_length, tokenizer)
+    val_dataset = QAGEvaluatorDataset(dataset["validation"], args.max_length, tokenizer)
+    test_dataset = QAGEvaluatorDataset(dataset["test"], args.max_length, tokenizer)
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name)
     user_dir = "./dir/"
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
@@ -46,7 +46,10 @@ if __name__ == "__main__":
         epochs=args.epochs,
         learning_rate=args.learning_rate,
         model=model,
-        user_dir=user_dir,
+        optimizer=optimizer,
+        tokenizer=tokenizer,
+        pin_memory=args.pin_memory,
+        save_dir=user_dir,
         train_set=train_dataset,
         validation_set=val_dataset,
         test_set=test_dataset,
@@ -56,5 +59,5 @@ if __name__ == "__main__":
         metrics_evaluation=True
     )    
 
-    #trainer.train()
+    trainer.train()
 

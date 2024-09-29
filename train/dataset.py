@@ -55,7 +55,7 @@ class QAGEvaluatorDataset(Dataset):
                  max_length: int,
                  tokenizer: AutoTokenizer,
                  ) -> None:
-        this.data = data,
+        this.data = pd.DataFrame(data)
         this.max_length = max_length
         this.tokenizer = tokenizer
         this.spacy_tokenizer = spacy.load("xx_ent_wiki_sm")
@@ -63,7 +63,7 @@ class QAGEvaluatorDataset(Dataset):
 
 
     def __len__(this) -> int:
-        return this.data.shape[0]
+        return len(this.data)
 
     def _encode_text(this, question: str, answer: str) -> Mapping[str, torch.Tensor]:
         encoded_source = this.tokenizer(text=question,
@@ -89,7 +89,7 @@ class QAGEvaluatorDataset(Dataset):
             "input_ids": encoded_input["input_ids"].flatten(),
             "attention_mask": encoded_input["attention_mask"].flatten(),
             "token_type_ids": encoded_input["token_type_ids"].flatten(),
-            "labels": torch.Tensor(label_choice, dtype=torch.int64),
+            "labels": torch.tensor(label_choice, dtype=torch.int64),
         }
 
     def shuffle(this,  question: str, answer) -> Tuple[str, str]:

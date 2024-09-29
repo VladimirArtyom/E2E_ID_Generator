@@ -40,7 +40,7 @@ class MetricsResult:
 
     def update(this, scores: Mapping[str, float], n: int):
         for score in scores:
-            mCalc = MetricsCalc(name=score.key)
+            mCalc = MetricsCalc(name=score)
             mCalc.update(score.value, n)
             
 

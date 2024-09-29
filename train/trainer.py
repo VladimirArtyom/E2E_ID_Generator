@@ -90,8 +90,8 @@ class Trainer:
                     tq.set_postfix({"train_loss": this.train_loss.avg})
                     tq.update(1)
 
-            if this.metrics_evaluation :
-                valid_metrics = this._single_value_metrics(this.validate_metrics(this.validation_data_loader))
+            if this.metrics_evaluation:
+                valid_metrics = this._single_value_metrics(this.validate_metrics(this.validation_data_loader, this.train_batch_size))
                 if valid_metrics[MetricEnum.BAS.name] > this.best_valid_score:
                     print(f"The best validation improved from {this.best_valid_score} to {valid_metrics[MetricEnum.BAS.name]}")
                     this.best_valid_score = valid_metrics[MetricEnum.BAS.name]
