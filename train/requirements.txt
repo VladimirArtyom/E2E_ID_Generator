@@ -1,0 +1,7 @@
+numpy==1.26.4
+pandas==2.2.2
+torch==2.3.0
+datasets
+torchtext==0.18.0
+tokenizers==0.13.1
+transformers==4.30.1
