@@ -57,7 +57,7 @@ class QAGEvaluatorDataset(Dataset):
                  max_length: int,
                  tokenizer: AutoTokenizer,
                  ) -> None:
-        this.data = pd.DataFrame(data)[:10]
+        this.data = pd.DataFrame(data)
         this.max_length = max_length
         this.tokenizer = tokenizer
         this.spacy_tokenizer = spacy.load("xx_ent_wiki_sm")

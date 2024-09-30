@@ -33,11 +33,15 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args: argparse.Namespace = parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    tokenizer.add_special_tokens({
+        "additional_special_tokens": ["<context>"]
+    })
     dataset = datasets.load_dataset("VosLannack/qa_evaluatior_512")
     train_dataset = QAGEvaluatorDataset(dataset["train"], args.max_length, tokenizer)
     val_dataset = QAGEvaluatorDataset(dataset["validation"], args.max_length, tokenizer)
     test_dataset = QAGEvaluatorDataset(dataset["test"], args.max_length, tokenizer)
     model = AutoModelForSequenceClassification.from_pretrained(args.model_name)
+    model.resize_token_embeddings(len(tokenizer))
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
     trainer = Trainer(
         workers=args.workers,
