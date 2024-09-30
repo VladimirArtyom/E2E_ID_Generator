@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--pad_mask_id", type=int, default=100)
     parser.add_argument("--model_name", type=str, default="indolem/indobert-base-uncased")# bert-base-cased
-    parser.add_argument("--save_dir", type=str, default="./saved_model_QAG_evaluator/")
+    parser.add_argument("--save_dir", type=str, default="/content/drive/MyDrive/Thesis/saved_model_QAG_evaluator/")
     parser.add_argument("--pin_memory", dest="pin_memory",
                         action="store_true", default=False)
     parser.add_argument("--metrics_evaluation", dest="metrics_evaluation",
@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args: argparse.Namespace = parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
-    dataset = datasets.load_dataset("Voslannack/squad_id_train")
+    dataset = datasets.load_dataset("VosLannack/qa_evaluatior_512")
     train_dataset = QAGEvaluatorDataset(dataset["train"], args.max_length, tokenizer)
     val_dataset = QAGEvaluatorDataset(dataset["validation"], args.max_length, tokenizer)
     test_dataset = QAGEvaluatorDataset(dataset["test"], args.max_length, tokenizer)

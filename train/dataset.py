@@ -100,7 +100,8 @@ class QAGEvaluatorDataset(Dataset):
             shuffled_answer = this.data.sample(1)['answer'].item()
         return question, shuffled_answer
 
-    def corrupt(this, question: str, answer: str) -> Tuple[str, str]:
+    def corrupt(this, question:
+     str, answer: str) -> Tuple[str, str]:
         doc = this.spacy_tokenizer(question)
         if len(doc.ents) > 1:
             copy_ent = str(random.choice(doc.ents))
