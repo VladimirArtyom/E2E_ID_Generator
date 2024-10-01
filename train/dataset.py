@@ -79,13 +79,12 @@ class QAGEvaluatorDataset(Dataset):
 
     def __getitem__(this, index: int) -> Mapping[str, torch.Tensor]:
         item = this.data.iloc[index]
+        context = item.context
         question = item.question
         answer = item.answer
-        label_choice = random.choice([0, 1])
-        if label_choice == 0:
-            question, answer = random.choice(this.transforms)(question, answer)
+        label_choice = item.label_answer
 
-        encoded_input = this._encode_text(question=question,
+        encoded_input = this._encode_text(question="{} {} {}".format(question, "<context>", context),
                                           answer=answer)
         return {
             "input_ids": encoded_input["input_ids"].flatten(),
