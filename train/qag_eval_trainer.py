@@ -13,7 +13,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default="cuda", type=str)
     parser.add_argument("--epochs", type=int, default=1)
-    parser.add_argument("--learning_rate", type=float, default=1e-3)
+    parser.add_argument("--learning_rate", type=float, default=1e-5)
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--pad_mask_id", type=int, default=100)
     parser.add_argument("--model_name", type=str, default="indolem/indobert-base-uncased")# bert-base-cased
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     args: argparse.Namespace = parse_args()
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     tokenizer.add_special_tokens({
-        "additional_special_tokens": ["<context>"]
+        "additional_special_tokens": ["<question>","<context>"]
     })
     dataset = datasets.load_dataset("VosLannack/qa_evaluatior_512")
     train_dataset = QAGEvaluatorDataset(dataset["train"], args.max_length, tokenizer)

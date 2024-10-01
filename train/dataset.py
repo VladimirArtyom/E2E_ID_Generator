@@ -84,7 +84,7 @@ class QAGEvaluatorDataset(Dataset):
         answer = item.answer
         label_choice = item.label_answer
 
-        encoded_input = this._encode_text(question="{} {} {}".format(question, "<context>", context),
+        encoded_input = this._encode_text(question="{} {} {} {}".format("<question>",question, "<context>", context),
                                           answer=answer)
         return {
             "input_ids": encoded_input["input_ids"].flatten(),
