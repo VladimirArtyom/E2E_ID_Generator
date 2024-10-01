@@ -16,7 +16,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning_rate", type=float, default=1e-5)
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--pad_mask_id", type=int, default=100)
-    parser.add_argument("--model_name", type=str, default="indolem/indobert-base-uncased")# bert-base-cased
+    parser.add_argument("--model_name", type=str, default="/content/drive/MyDrive/Thesis/saved_model_QAG_evaluator/")# indolem/indobert-base-uncased 
     parser.add_argument("--save_dir", type=str, default="/content/drive/MyDrive/Thesis/saved_model_QAG_evaluator/")
     parser.add_argument("--pin_memory", dest="pin_memory",
                         action="store_true", default=False)

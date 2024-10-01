@@ -1,6 +1,7 @@
 import torch
 from metrics_calculator import MetricsCalc, MetricsResult, MetricEnum
 from torch.optim import AdamW
+from torch import Tensor
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer
@@ -28,6 +29,7 @@ class Trainer:
         workers: int, 
         pin_memory: bool,
         metrics_evaluation: bool,
+        do_validate: bool = False,
         ) -> None:
         this.device = device
         this.epochs = epochs
@@ -62,6 +64,8 @@ class Trainer:
         this.train_metrics: List[MetricsResult] = []
         this.train_loss = MetricsCalc(name="loss_train")
         this.validation_loss = MetricsCalc(name="validation_loss")
+        this.do_validate = do_validate
+
         if metrics_evaluation:
             this.best_valid_score: float = 0
             this.best_loss_score: float = 2**31 - 1
@@ -86,34 +90,41 @@ class Trainer:
                     this.train_loss.update(loss.item(), this.train_batch_size)
                     tq.set_postfix({"train_loss": this.train_loss.avg})
                     tq.update(1)
-
-            if this.metrics_evaluation:
-                print("Train Loss : ", loss.item())
-                valid_metrics = this._single_value_metrics(this.validate_metrics(this.validation_data_loader, this.train_batch_size))
-                if valid_metrics[MetricEnum.BAS.name] > this.best_valid_score:
-                    print(f"The best validation improved from {this.best_valid_score} to {valid_metrics[MetricEnum.BAS.name]}")
-                    this.best_valid_score = valid_metrics[MetricEnum.BAS.name]
-                this._show_metrics_results(valid_metrics)
                 this._save()
+            if this.do_validate:
+                if this.metrics_evaluation:
+                    print("Train Loss : ", loss.item())
+                    valid_metrics = this._single_value_metrics(this.validate_metrics(this.validation_data_loader, this.validation_batch_size))
+                    if valid_metrics[MetricEnum.BAS.name] > this.best_valid_score:
+                        print(f"The best validation improved from {this.best_valid_score} to {valid_metrics[MetricEnum.BAS.name]}")
+                        this.best_valid_score = valid_metrics[MetricEnum.BAS.name]
+                        this._save()
+                    this._show_metrics_results(valid_metrics)
+                else:
+                    valid_loss = this.validate(this.validation_data_loader)
+                    if this.best_loss_score > valid_loss:
+                        print(f"The best loss decreased from {this.best_loss_score} to {valid_loss}")
+                        this.best_loss_score = valid_loss
+                        this._save()
+                    print("Train Loss : ", valid_loss)
             else:
-                valid_loss = this.validate(this.validation_data_loader)
-                if this.best_loss_score > valid_loss:
-                    print(f"The best loss decreased from {this.best_loss_score} to {valid_loss}")
-                    this.best_loss_score = valid_loss
-                print("Train Loss : ", valid_loss)
-                this._save()
+                print("Skipping the validation part, hemat duit cok")
 
     def validate(this, dataloader: DataLoader):
         this.model.eval()
+        losses : List[float] = []
         with tqdm(total=len(dataloader), unit="batches") as tq:
             tq.set_description("validation")
             for batch in dataloader:
                 data = {key: value.to(this.device) for key, value in batch.items()}
                 output = this.model(**data)
-                loss = output.loss
+                loss: Tensor = output.loss
                 this.validation_loss.update(loss.item(), this.validation_batch_size)
                 tq.set_postfix({"valid_loss": this.validation_loss.avg})
                 tq.update(1)
+                losses.append(this.validation_loss.avg)
+        return losses / len(losses)
+
 
     def _save(this) -> None:
         this.tokenizer.save_pretrained(this.save_dir)
