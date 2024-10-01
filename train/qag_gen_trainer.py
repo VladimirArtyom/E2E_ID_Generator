@@ -42,7 +42,7 @@ if __name__ == "__main__":
     args = parse_args()
     tokenizer = prep_tokenizer(args.model_name)
     model = prep_model(args.model_name, args.device, tokenizer)
-    dataset = datasets.load_dataset("Voslannack/squad_id_train")
+    dataset = datasets.load_dataset("Voslannack/squad_id_512")
     train_set = QAGDataset(dataset["train"], args.max_length, args.pad_mask_id, tokenizer)
     validation_set = QAGDataset(dataset["validation"], args.max_length, args.pad_mask_id, tokenizer)
     test_set = QAGDataset(dataset["test"], args.max_length, args.pad_mask_id, tokenizer)
