@@ -11,9 +11,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--learning_rate", type=float, default=1e-5)
-    parser.add_argument("--model_name", type=str, default="/content/drive/MyDrive/Thesis/saved_model_QG_generator_staged")#iarfmoose/t5-base-question-generator 
+    parser.add_argument("--model_name", type=str, default="t5-small")#iarfmoose/t5-base-question-generator 
     parser.add_argument("--pad_mask_id", type=int, default=-100)
-    parser.add_argument("--save_dir", type=str, default="/content/drive/MyDrive/Thesis/saved_model_QG_generator_staged")
+    parser.add_argument("--save_dir", type=str, default="/content/drive/MyDrive/Thesis/QG_5_epoch_t5small")
     parser.add_argument("--train_batch_size", type=int, default=1)
     parser.add_argument("--validation_batch_size", type=int, default=1)
     parser.add_argument("--test_batch_size", type=int, default=1)
