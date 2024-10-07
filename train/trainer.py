@@ -1,4 +1,5 @@
 import torch
+from numpy import sum
 from metrics_calculator import MetricsCalc, MetricsResult, MetricEnum
 from torch.optim import AdamW
 from torch import Tensor
@@ -123,7 +124,7 @@ class Trainer:
                 tq.set_postfix({"valid_loss": this.validation_loss.avg})
                 tq.update(1)
                 losses.append(this.validation_loss.avg)
-        return losses / len(losses)
+        return sum(losses) / len(losses)
 
 
     def _save(this) -> None:
